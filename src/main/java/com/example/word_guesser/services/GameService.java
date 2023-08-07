@@ -3,6 +3,8 @@ package com.example.word_guesser.services;
 import com.example.word_guesser.models.Game;
 import com.example.word_guesser.models.Guess;
 import com.example.word_guesser.models.Reply;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -11,6 +13,9 @@ import java.util.ArrayList;
 
 @Service
 public class GameService {
+
+    @Autowired
+    WordService wordService;
 
     private Game game;
     private String currentWord;
@@ -22,9 +27,9 @@ public class GameService {
     }
 
     public Reply startNewGame() {
-
-        this.game = new Game("hello");
-        this.currentWord = "*****";
+        String targetWord = wordService.getRandomWord();
+        this.game = new Game(targetWord);
+        this.currentWord = Strings.repeat("*", targetWord.length()); // Generates a string of *'s of targetWords length
         this.guessedLetters = new ArrayList<>();
         Reply reply = new Reply(
                 false,
