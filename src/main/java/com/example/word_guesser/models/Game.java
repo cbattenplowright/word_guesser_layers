@@ -2,11 +2,16 @@ package com.example.word_guesser.models;
 
 public class Game {
 
+    private static int nextId = 1; // This tracks the gameIds
+
+    private int id;
     private String word;
     private int guesses;
     private boolean complete;
 
     public Game(String word) {
+        this.id = nextId;
+        nextId += 1; // increments nextId by one creating unique ids for each game
         this.word = word;
         this.guesses = 0;
         this.complete = false;
@@ -37,5 +42,13 @@ public class Game {
 
     public void setComplete(boolean complete) {
         this.complete = complete;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }

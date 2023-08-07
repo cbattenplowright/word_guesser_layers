@@ -3,6 +3,7 @@ package com.example.word_guesser.services;
 import com.example.word_guesser.models.Game;
 import com.example.word_guesser.models.Guess;
 import com.example.word_guesser.models.Reply;
+import com.example.word_guesser.repositories.GameList;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,9 @@ public class GameService {
     @Autowired
     WordService wordService;
 
-    private Game game;
+    @Autowired
+    GameList gameList;
+
     private String currentWord;
     private ArrayList<String> guessedLetters;
 
@@ -28,19 +31,22 @@ public class GameService {
 
     public Reply startNewGame() {
         String targetWord = wordService.getRandomWord();
-        this.game = new Game(targetWord);
+        Game game = new Game(targetWord);
         this.currentWord = Strings.repeat("*", targetWord.length()); // Generates a string of *'s of targetWords length
         this.guessedLetters = new ArrayList<>();
+        gameList.addGame(game); // adding the game to the gameList array
         Reply reply = new Reply(
                 false,
                 currentWord,
-                "New game started");
+                "New game started with id " + game.getId());
 
         return reply;
     }
 
-    public Reply processGuess(Guess guess) {
+    public Reply processGuess(Guess guess, int id) {
 //        Can break down each conditional loop into algorithm methods
+//        Find the correct game
+        Game game = gameList.getGameById(id);
         // create new Reply object
         Reply reply;
 
@@ -49,7 +55,7 @@ public class GameService {
             reply = new Reply(
                     false,
                     this.currentWord,
-                    String.format("Game has not been started"));
+                    "Game has not been started");
             return reply;
         }
 
@@ -92,13 +98,6 @@ public class GameService {
     }
 
 //    Getters and Setters
-    public Game getGame() {
-        return game;
-    }
-
-    public void setGame(Game game) {
-        this.game = game;
-    }
 
     public String getCurrentWord() {
         return currentWord;
