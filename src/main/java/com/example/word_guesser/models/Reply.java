@@ -1,6 +1,7 @@
 package com.example.word_guesser.models;
 
 
+// This is the class that will be passed around our application
 public class Reply {
 
     private boolean correct;

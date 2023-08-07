@@ -4,6 +4,8 @@ import com.example.word_guesser.models.Game;
 import com.example.word_guesser.models.Guess;
 import com.example.word_guesser.models.LetterList;
 import com.example.word_guesser.models.Reply;
+import com.example.word_guesser.services.GameService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,16 +21,13 @@ import java.util.Scanner;
 @RequestMapping(value = "/games")
 public class GameController {
 
-    private Game game;
-    private String currentWord;
-    private ArrayList<String> guessedLetters;
+//    Tells Bean to instantiate a gameService object this is dependency injection allowing us to loosely couple the code
+    @Autowired
+    GameService gameService;
 
     @PostMapping
     public ResponseEntity<Reply> startNewGame() {
-        this.game = new Game("hello");
-        this.currentWord = "*****";
-        this.guessedLetters = new ArrayList<>();
-        Reply reply = new Reply(false, currentWord, "New game started");
+        Reply reply = gameService.startNewGame();
         return new ResponseEntity<>(reply, HttpStatus.CREATED);
     }
 
@@ -36,72 +35,31 @@ public class GameController {
     public ResponseEntity<Reply> getGameStatus() {
         Reply reply;
         // Check if game has started
-        if (game == null) {
+        if (gameService.getGame() == null) {
             reply = new Reply(
                     false,
-                    this.currentWord,
+                    gameService.getCurrentWord(),
                     String.format("Game has not been started"));
         } else {
-            reply = new Reply(false, this.currentWord, "Game in progress.");
+            reply = new Reply(
+                    false,
+                    gameService.getCurrentWord(),
+                    "Game in progress.");
         }
         return new ResponseEntity<>(reply, HttpStatus.OK);
     }
 
     @PatchMapping
     public ResponseEntity<Reply> handleGuess(@RequestBody Guess guess) {
-        // create new Reply object
-        Reply reply;
-
-        // Check if game has started
-        if (game == null) {
-            reply = new Reply(
-                    false,
-                    this.currentWord,
-                    String.format("Game has not been started"));
-            return new ResponseEntity<>(reply, HttpStatus.OK);
-        }
-
-        // check if letter has already been guessed
-        if (this.guessedLetters.contains(guess.getLetter())) {
-            reply = new Reply(
-                    false,
-                    this.currentWord,
-                    String.format("Already guessed %s", guess.getLetter()));
-            return new ResponseEntity<>(reply, HttpStatus.OK);
-        }
-        // add letter to previous guesses
-        this.guessedLetters.add(guess.getLetter());
-        // check for incorrect guess
-        if (!game.getWord().contains(guess.getLetter())) {
-            reply = new Reply(
-                    false,
-                    this.currentWord,
-                    String.format("%s is not in the word", guess.getLetter()));
-            return new ResponseEntity<>(reply, HttpStatus.OK);
-        }
-        // process correct guess
-        String runningResult = game.getWord();
-
-        for (Character letter : game.getWord().toCharArray()) {
-            if (!this.guessedLetters.contains(letter.toString())) {
-                runningResult = runningResult.replace(letter, '*');
-            }
-        }
-
-        this.currentWord = runningResult;
-
-        reply = new Reply(
-                true,
-                this.currentWord,
-                String.format("%s is in the word", guess.getLetter()));
-
+        Reply reply = gameService.processGuess(guess);
         // return result
         return new ResponseEntity<>(reply, HttpStatus.OK);
     }
 
     @GetMapping(value = "/guessed")
     public ResponseEntity<LetterList> checkGuesses() {
-        LetterList letters = new LetterList(this.guessedLetters);
+        ArrayList<String> guesses = gameService.getGuessedLetters();
+        LetterList letters = new LetterList(guesses);
         return new ResponseEntity<>(letters, HttpStatus.OK);
     }
 }
